@@ -30,65 +30,76 @@ GO
 
 -- =============================================================
 -- TABLE: Users
--- Stores both Organisers and Participants, distinguished by Role.
+-- Users stores all system accounts (Organisers and Participants) in a single table.
+-- The Role column differentiates account types and is enforced by a CHECK constraint.
+-- A single-table design simplifies authentication and JWT role-claim generation.
 -- =============================================================
 CREATE TABLE dbo.Users (
-    UserID        INT            IDENTITY(1,1)  NOT NULL,
-    FullName      NVARCHAR(100)                 NOT NULL,
-    Email         NVARCHAR(150)                 NOT NULL,
-    PasswordHash  NVARCHAR(256)                 NOT NULL,
-    Role          NVARCHAR(20)                  NOT NULL,
-    PhoneNumber   NVARCHAR(20)                  NULL,
-    DateOfBirth   DATE                          NULL,
-    CreatedAt     DATETIME2                     NOT NULL CONSTRAINT DF_Users_CreatedAt DEFAULT GETDATE(),
-    IsActive      BIT                           NOT NULL CONSTRAINT DF_Users_IsActive  DEFAULT 1,
+    UserID        INT            IDENTITY(1,1)  NOT NULL,  -- Surrogate PK, auto-incremented
+    FullName      NVARCHAR(100)                 NOT NULL,  -- Display name
+    Email         NVARCHAR(150)                 NOT NULL,  -- Used as login identifier
+    PasswordHash  NVARCHAR(256)                 NOT NULL,  -- BCrypt hash; never store plain text
+    Role          NVARCHAR(20)                  NOT NULL,  -- 'Organiser' or 'Participant'
+    PhoneNumber   NVARCHAR(20)                  NULL,      -- Optional contact number
+    DateOfBirth   DATE                          NULL,      -- Optional; used for age-group eligibility
+    CreatedAt     DATETIME2                     NOT NULL CONSTRAINT DF_Users_CreatedAt DEFAULT GETDATE(),  -- Auto-stamped on insert
+    IsActive      BIT                           NOT NULL CONSTRAINT DF_Users_IsActive  DEFAULT 1,          -- Soft-delete flag
 
+    -- Primary key and uniqueness constraints
     CONSTRAINT PK_Users        PRIMARY KEY (UserID),
-    CONSTRAINT UQ_Users_Email  UNIQUE      (Email),
-    CONSTRAINT CK_Users_Role   CHECK       (Role IN ('Organiser', 'Participant'))
+    CONSTRAINT UQ_Users_Email  UNIQUE      (Email),       -- Prevents duplicate accounts per email
+    CONSTRAINT CK_Users_Role   CHECK       (Role IN ('Organiser', 'Participant'))  -- Restricts to known roles
 );
 GO
 
 -- =============================================================
 -- TABLE: Events
--- Road running, walking, or cycling events created by Organisers.
+-- Events represents road running, walking, or cycling races organised by Organisers.
+-- The Status column follows a defined lifecycle: Upcoming → Open → Closed → Completed.
+-- OrganiserID links each event to its owning User; only that user may modify the event.
 -- =============================================================
 CREATE TABLE dbo.Events (
-    EventID      INT            IDENTITY(1,1)  NOT NULL,
-    OrganiserID  INT                           NOT NULL,
-    Name         NVARCHAR(150)                 NOT NULL,
-    Description  NVARCHAR(MAX)                 NULL,
-    EventDate    DATE                          NOT NULL,
-    Location     NVARCHAR(200)                 NOT NULL,
-    City         NVARCHAR(100)                 NOT NULL,
-    Province     NVARCHAR(100)                 NOT NULL,
-    Status       NVARCHAR(20)                  NOT NULL CONSTRAINT DF_Events_Status DEFAULT 'Upcoming',
-    ImageURL     NVARCHAR(500)                 NULL,
-    CreatedAt    DATETIME2                     NOT NULL CONSTRAINT DF_Events_CreatedAt DEFAULT GETDATE(),
+    EventID      INT            IDENTITY(1,1)  NOT NULL,   -- Surrogate PK
+    OrganiserID  INT                           NOT NULL,   -- FK to Users (the creating Organiser)
+    Name         NVARCHAR(150)                 NOT NULL,   -- Public event title
+    Description  NVARCHAR(MAX)                 NULL,       -- Optional detailed description
+    EventDate    DATE                          NOT NULL,   -- Scheduled date of the event
+    Location     NVARCHAR(200)                 NOT NULL,   -- Street address or venue name
+    City         NVARCHAR(100)                 NOT NULL,   -- City for browsing/filtering
+    Province     NVARCHAR(100)                 NOT NULL,   -- Province for browsing/filtering
+    Status       NVARCHAR(20)                  NOT NULL CONSTRAINT DF_Events_Status DEFAULT 'Upcoming',  -- Lifecycle state
+    ImageURL     NVARCHAR(500)                 NULL,       -- Optional promotional image URL
+    CreatedAt    DATETIME2                     NOT NULL CONSTRAINT DF_Events_CreatedAt DEFAULT GETDATE(), -- Auto-stamped
 
+    -- Primary key, foreign keys, and value constraints
     CONSTRAINT PK_Events           PRIMARY KEY (EventID),
     CONSTRAINT FK_Events_Organiser FOREIGN KEY (OrganiserID) REFERENCES dbo.Users(UserID),
+    -- Status must be one of the defined lifecycle values
     CONSTRAINT CK_Events_Status    CHECK       (Status IN ('Upcoming', 'Open', 'Closed', 'Completed', 'Cancelled'))
 );
 GO
 
 -- =============================================================
 -- TABLE: Categories
--- Race categories within an event (e.g. 5K Run, Half Marathon).
+-- Categories defines the individual race types within an event (e.g. 5K Run, Half Marathon).
+-- An event must have at least one category for participants to enrol.
+-- CASCADE DELETE ensures categories are removed automatically when their parent event is deleted.
 -- =============================================================
 CREATE TABLE dbo.Categories (
-    CategoryID       INT            IDENTITY(1,1)  NOT NULL,
-    EventID          INT                           NOT NULL,
-    Name             NVARCHAR(100)                 NOT NULL,
-    Distance         DECIMAL(6, 2)                 NOT NULL,
-    DistanceUnit     NVARCHAR(10)                  NOT NULL CONSTRAINT DF_Categories_Unit    DEFAULT 'km',
-    EntryFee         DECIMAL(10, 2)                NOT NULL CONSTRAINT DF_Categories_Fee     DEFAULT 0.00,
-    MaxParticipants  INT                           NULL,
-    EventType        NVARCHAR(20)                  NOT NULL,
-    CreatedAt        DATETIME2                     NOT NULL CONSTRAINT DF_Categories_CreatedAt DEFAULT GETDATE(),
+    CategoryID       INT            IDENTITY(1,1)  NOT NULL,  -- Surrogate PK
+    EventID          INT                           NOT NULL,  -- FK to parent Event
+    Name             NVARCHAR(100)                 NOT NULL,  -- Category label (e.g. '10K Race')
+    Distance         DECIMAL(6, 2)                 NOT NULL,  -- Race distance; must be positive
+    DistanceUnit     NVARCHAR(10)                  NOT NULL CONSTRAINT DF_Categories_Unit    DEFAULT 'km',   -- 'km' or 'm'
+    EntryFee         DECIMAL(10, 2)                NOT NULL CONSTRAINT DF_Categories_Fee     DEFAULT 0.00,   -- Entry fee in ZAR; 0 = free
+    MaxParticipants  INT                           NULL,      -- Optional cap; NULL = unlimited
+    EventType        NVARCHAR(20)                  NOT NULL,  -- 'Running', 'Walking', or 'Cycling'
+    CreatedAt        DATETIME2                     NOT NULL CONSTRAINT DF_Categories_CreatedAt DEFAULT GETDATE(), -- Auto-stamped
 
+    -- Primary key and foreign key (cascade keeps data consistent on event deletion)
     CONSTRAINT PK_Categories           PRIMARY KEY (CategoryID),
     CONSTRAINT FK_Categories_Event     FOREIGN KEY (EventID) REFERENCES dbo.Events(EventID) ON DELETE CASCADE,
+    -- Value range and domain constraints
     CONSTRAINT CK_Categories_Unit      CHECK       (DistanceUnit IN ('km', 'm')),
     CONSTRAINT CK_Categories_Type      CHECK       (EventType IN ('Running', 'Walking', 'Cycling')),
     CONSTRAINT CK_Categories_Distance  CHECK       (Distance > 0),
@@ -98,62 +109,77 @@ GO
 
 -- =============================================================
 -- TABLE: EventRoutes
--- Optional route/map data for an event. One-to-one with Events.
+-- EventRoutes stores optional map and GPS route data for an event.
+-- Kept in a separate table so events without a route do not carry null columns.
+-- The UNIQUE constraint on EventID enforces the one-to-one relationship with Events.
+-- CASCADE DELETE removes the route automatically when the event is deleted.
 -- =============================================================
 CREATE TABLE dbo.EventRoutes (
-    RouteID           INT            IDENTITY(1,1)  NOT NULL,
-    EventID           INT                           NOT NULL,
-    RouteDescription  NVARCHAR(MAX)                 NULL,
-    MapURL            NVARCHAR(500)                 NULL,
-    GPXData           NVARCHAR(MAX)                 NULL,
-    ElevationGain     DECIMAL(8, 2)                 NULL,
-    CreatedAt         DATETIME2                     NOT NULL CONSTRAINT DF_Routes_CreatedAt DEFAULT GETDATE(),
+    RouteID           INT            IDENTITY(1,1)  NOT NULL,  -- Surrogate PK
+    EventID           INT                           NOT NULL,  -- FK to Events; must be unique (one route per event)
+    RouteDescription  NVARCHAR(MAX)                 NULL,      -- Plain-text course description
+    MapURL            NVARCHAR(500)                 NULL,      -- Link to interactive map
+    GPXData           NVARCHAR(MAX)                 NULL,      -- Raw GPX XML for GPS device download
+    ElevationGain     DECIMAL(8, 2)                 NULL,      -- Total ascent in metres
+    CreatedAt         DATETIME2                     NOT NULL CONSTRAINT DF_Routes_CreatedAt DEFAULT GETDATE(), -- Auto-stamped
 
+    -- Primary key; FK cascades so route is deleted with the event
     CONSTRAINT PK_EventRoutes       PRIMARY KEY (RouteID),
     CONSTRAINT FK_Routes_Event      FOREIGN KEY (EventID) REFERENCES dbo.Events(EventID) ON DELETE CASCADE,
+    -- Unique on EventID enforces one-to-one with Events
     CONSTRAINT UQ_Routes_EventID    UNIQUE      (EventID)
 );
 GO
 
 -- =============================================================
 -- TABLE: Enrolments
--- A Participant's entry into a specific Category.
--- Unique constraint prevents double-entry per participant per category.
+-- Enrolments records a Participant's registration for a specific Category.
+-- The composite UNIQUE constraint enforces the business rule that a participant
+-- may only enter a given category once, enforced at the database level.
+-- No CASCADE DELETE on FKs here; enrolment history must be preserved.
 -- =============================================================
 CREATE TABLE dbo.Enrolments (
-    EnrolmentID    INT            IDENTITY(1,1)  NOT NULL,
-    ParticipantID  INT                           NOT NULL,
-    CategoryID     INT                           NOT NULL,
-    EnrolmentDate  DATETIME2                     NOT NULL CONSTRAINT DF_Enrolments_Date  DEFAULT GETDATE(),
-    PaymentStatus  NVARCHAR(20)                  NOT NULL CONSTRAINT DF_Enrolments_Pay   DEFAULT 'Pending',
-    BibNumber      NVARCHAR(20)                  NULL,
+    EnrolmentID    INT            IDENTITY(1,1)  NOT NULL,  -- Surrogate PK
+    ParticipantID  INT                           NOT NULL,  -- FK to Users (Participant)
+    CategoryID     INT                           NOT NULL,  -- FK to Categories
+    EnrolmentDate  DATETIME2                     NOT NULL CONSTRAINT DF_Enrolments_Date  DEFAULT GETDATE(),  -- Auto-stamped
+    PaymentStatus  NVARCHAR(20)                  NOT NULL CONSTRAINT DF_Enrolments_Pay   DEFAULT 'Pending', -- Payment lifecycle
+    BibNumber      NVARCHAR(20)                  NULL,      -- Assigned by Organiser before race day
 
+    -- Primary key and foreign keys (no cascade; history must be preserved)
     CONSTRAINT PK_Enrolments              PRIMARY KEY (EnrolmentID),
     CONSTRAINT FK_Enrolments_Participant  FOREIGN KEY (ParticipantID) REFERENCES dbo.Users(UserID),
     CONSTRAINT FK_Enrolments_Category     FOREIGN KEY (CategoryID)    REFERENCES dbo.Categories(CategoryID),
+    -- Composite unique: one enrolment per participant per category
     CONSTRAINT UQ_Enrolment_ParticipantCategory UNIQUE (ParticipantID, CategoryID),
+    -- Payment status domain constraint
     CONSTRAINT CK_Enrolments_PayStatus    CHECK       (PaymentStatus IN ('Pending', 'Paid', 'Refunded'))
 );
 GO
 
 -- =============================================================
 -- TABLE: Results
--- Finish time and position recorded by Organiser after the event.
--- One-to-one with Enrolments.
+-- Results records finish times and positions entered by an Organiser after the event.
+-- Linked to Enrolments (not directly to Users) so each result always carries
+-- full context: participant, category, event, and bib number via one join.
+-- The UNIQUE constraint on EnrolmentID enforces one-to-one with Enrolments.
 -- =============================================================
 CREATE TABLE dbo.Results (
-    ResultID      INT            IDENTITY(1,1)  NOT NULL,
-    EnrolmentID   INT                           NOT NULL,
-    FinishTime    TIME                          NULL,
-    Position      INT                           NULL,
-    Status        NVARCHAR(20)                  NOT NULL CONSTRAINT DF_Results_Status DEFAULT 'DNS',
-    Notes         NVARCHAR(500)                 NULL,
-    RecordedAt    DATETIME2                     NOT NULL CONSTRAINT DF_Results_RecordedAt DEFAULT GETDATE(),
+    ResultID      INT            IDENTITY(1,1)  NOT NULL,  -- Surrogate PK
+    EnrolmentID   INT                           NOT NULL,  -- FK to Enrolments (not Users directly)
+    FinishTime    TIME                          NULL,      -- Clock time; NULL if DNS/DNF
+    Position      INT                           NULL,      -- Category finishing position; NULL if not ranked
+    Status        NVARCHAR(20)                  NOT NULL CONSTRAINT DF_Results_Status DEFAULT 'DNS',  -- Race outcome code
+    Notes         NVARCHAR(500)                 NULL,      -- Optional Organiser notes (e.g. DQ reason)
+    RecordedAt    DATETIME2                     NOT NULL CONSTRAINT DF_Results_RecordedAt DEFAULT GETDATE(), -- Auto-stamped
 
+    -- Primary key and FK; UNIQUE enforces one result per enrolment
     CONSTRAINT PK_Results            PRIMARY KEY (ResultID),
     CONSTRAINT FK_Results_Enrolment  FOREIGN KEY (EnrolmentID) REFERENCES dbo.Enrolments(EnrolmentID),
     CONSTRAINT UQ_Results_Enrolment  UNIQUE      (EnrolmentID),
+    -- Status must be one of the four recognised race outcome codes
     CONSTRAINT CK_Results_Status     CHECK       (Status IN ('Finished', 'DNF', 'DNS', 'DQ')),
+    -- Position must be a positive integer if provided
     CONSTRAINT CK_Results_Position   CHECK       (Position IS NULL OR Position > 0)
 );
 GO
