@@ -20,6 +20,16 @@ RaceDay follows a three-tier architecture. Part 1 covers the planning layer, whi
 
 Access control is role-based. All users are stored in a single Users table and differentiated by a Role column, enforced through a CHECK constraint at the database level and validated via JWT authentication at the API layer.
 
+## Database Design Decisions
+
+**Single-table user design:** Both Organisers and Participants are stored in the same `Users` table and distinguished by the `Role` column. This simplifies the authentication flow and avoids join complexity when resolving role claims from a JWT token.
+
+**Cascade deletes on child tables:** The `Categories` and `EventRoutes` tables use `ON DELETE CASCADE` on their foreign keys to `Events`. Deleting an event automatically removes all associated categories and its route record, keeping the database consistent without requiring multiple API-layer DELETE calls.
+
+**Composite unique constraint on Enrolments:** The `UQ_Enrolment_ParticipantCategory` constraint spans `(ParticipantID, CategoryID)`, enforcing at the database level that a participant may only enter a given category once. This protects against duplicate enrolments even if the application layer fails to validate the rule.
+
+**Status lifecycle via CHECK constraints:** The `Status` columns on `Events`, `Enrolments`, and `Results` use `CHECK` constraints rather than lookup tables. For small, stable sets of values (five or fewer), this keeps the schema simple and the allowed values visible directly in the `CREATE TABLE` definition without additional joins.
+
 ## Repository Structure
 
 ```
