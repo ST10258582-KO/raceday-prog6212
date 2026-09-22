@@ -289,6 +289,17 @@ VALUES
     );
 
 -- ----------------------------
+-- Event Routes (cont.)
+-- ----------------------------
+INSERT INTO dbo.EventRoutes (EventID, RouteDescription, MapURL, ElevationGain)
+VALUES (
+    2,
+    'Start at Sandton Convention Centre, proceed north along Rivonia Road to Fourways, loop through Magaliessig and return via William Nicol Drive. Mix of flat sections and moderate climbs through the northern suburbs.',
+    'https://maps.raceday.co.za/events/2/route',
+    310.00
+);
+
+-- ----------------------------
 -- Sample Enrolments
 -- ----------------------------
 INSERT INTO dbo.Enrolments (ParticipantID, CategoryID, PaymentStatus, BibNumber)
