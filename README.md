@@ -1,11 +1,13 @@
 # RaceDay
 
-An event management application to support the South African road running, walking, and cycling communities.
-It includes an organiser portal for managing events, a participant portal for browsing events and entering races, and a personal performance tracking feature for participants.
+An event management application designed to support South Africa's road running, walking, and cycling communities.
+Two main groups of users interact with the platform: event organisers and participants.
 
 ## System Description
 
-Event organisers can use RaceDay to create events and manage them. Event categories can be defined by organisers to help categorise the race types. Participant results can be captured and updated by organisers. Event organisers also have the capability to see all registrations for their events. Participants can register for an account and then search for upcoming events. Once they find an event that interests them, they can enrol into it. They also have the ability to review past performances.
+Organisers can create events, define race categories, capture participant results, and monitor registrations across all their events. Participants can register for an account, browse upcoming events, enrol into specific race categories, and review their past performance history.
+
+RaceDay follows a three-tier architecture. Part 1 covers the planning layer, which includes the entity relationship diagram, the API endpoint specification, and the SQL Server database schema. Part 2 will implement the back-end API layer, and Part 3 will deliver the front-end interface using ASP.NET MVC.
 
 ## User Roles
 
@@ -14,20 +16,21 @@ Event organisers can use RaceDay to create events and manage them. Event categor
 | **Organiser** | Can create, modify and remove events; define race categories; capture and update participant results; view all participants registered for their events. |
 | **Participant** | Can create an account; browse upcoming events; enrol in a specific event category; view their own enrolments and personal results history. |
 
-Access control is implemented through role-based authentication at the API layer (Part 2), which is then reflected in the MVC interface (Part 3).
+Access control is role-based. All users are stored in a single Users table and differentiated by a Role column, enforced through a CHECK constraint at the database level and validated via JWT authentication at the API layer.
 
 ## Repository Structure
 
 ```
 /
 ├── docs/
-│   ├── ERD.png                   # Entity Relationship Diagram (Section A)
-│   ├── ERD.md                    # Mermaid source for the ERD
-│   ├── api-endpoint-plan.md      # Full API endpoint specification (Section B)
-│   └── raceday_schema.sql        # SQL Server database schema + seed data (Section C)
+│   ├── RaceDay_Part1_ST10258582.docx   # Part 1 submission document
+│   ├── ERD.png                         # Entity Relationship Diagram (Section A)
+│   ├── ERD.md                          # Mermaid source for the ERD
+│   ├── api-endpoint-plan.md            # Full API endpoint specification (Section B)
+│   └── raceday_schema.sql              # SQL Server database schema + seed data (Section C)
 ├── .github/
 │   └── workflows/
-│       └── validate-docs.yml     # CI/CD workflow – validates /docs structure
+│       └── validate-docs.yml           # CI/CD workflow – validates /docs structure
 └── README.md
 ```
 
