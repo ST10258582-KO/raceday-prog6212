@@ -1,0 +1,74 @@
+name: Validate Docs Structure
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  validate-docs:
+    name: Check required docs files exist
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify /docs folder exists
+        run: |
+          if [ ! -d "docs" ]; then
+            echo "ERROR: /docs folder is missing."
+            exit 1
+          fi
+          echo "✓ /docs folder exists."
+
+      - name: Verify ERD image is present (PNG or PDF)
+        run: |
+          if ls docs/ERD.png docs/ERD.pdf 2>/dev/null | grep -q .; then
+            echo "✓ ERD image found."
+          else
+            echo "ERROR: No ERD image found. Expected docs/ERD.png or docs/ERD.pdf"
+            exit 1
+          fi
+
+      - name: Verify API endpoint plan is present
+        run: |
+          if ls docs/api-endpoint-plan.md docs/api-endpoint-plan.pdf 2>/dev/null | grep -q .; then
+            echo "✓ API endpoint plan found."
+          else
+            echo "ERROR: No API endpoint plan found. Expected docs/api-endpoint-plan.md or .pdf"
+            exit 1
+          fi
+
+      - name: Verify SQL schema script is present
+        run: |
+          SQL_COUNT=$(find docs -name "*.sql" | wc -l)
+          if [ "$SQL_COUNT" -gt 0 ]; then
+            echo "✓ SQL script found ($SQL_COUNT file(s))."
+          else
+            echo "ERROR: No .sql file found in /docs."
+            exit 1
+          fi
+
+      - name: Verify README exists
+        run: |
+          if [ -f "README.md" ]; then
+            echo "✓ README.md found."
+          else
+            echo "ERROR: README.md is missing from the repository root."
+            exit 1
+          fi
+
+      - name: Verify README mentions YouTube link
+        run: |
+          if grep -qi "youtube" README.md; then
+            echo "✓ README contains a YouTube reference."
+          else
+            echo "WARNING: README does not appear to contain a YouTube link."
+          fi
+
+      - name: List all docs files
+        run: |
+          echo "=== Contents of /docs ==="
+          ls -lh docs/
