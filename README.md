@@ -1,5 +1,7 @@
 # RaceDay
 
+![CI/CD](https://github.com/ST10258582-KO/raceday-prog6212/actions/workflows/validate-docs.yml/badge.svg)
+
 An event management application designed to support South Africa's road running, walking, and cycling communities.
 Two main groups of users interact with the platform: event organisers and participants.
 
@@ -70,7 +72,11 @@ Checks performed:
 - At least one `.sql` file is present
 - `README.md` exists in the root
 
-> **CI/CD Screenshot:** *(Add screenshot of successful green build here after first push)*
+### CI/CD Build Screenshot
+
+![Green Build](docs/cicd-screenshot.png)
+
+> Screenshot will be added after first successful push triggers the workflow.
 
 ## Video Presentation
 
