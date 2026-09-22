@@ -72,3 +72,20 @@ jobs:
         run: |
           echo "=== Contents of /docs ==="
           ls -lh docs/
+
+      - name: Verify SQL script is non-trivial
+        run: |
+          SQL_FILE=$(find docs -name "*.sql" | head -1)
+          LINE_COUNT=$(wc -l < "$SQL_FILE")
+          echo "SQL script has $LINE_COUNT lines."
+          if [ "$LINE_COUNT" -lt 50 ]; then
+            echo "ERROR: SQL script appears too short (less than 50 lines)."
+            exit 1
+          fi
+          echo "✓ SQL script length looks sufficient."
+
+      - name: Summary of /docs contents
+        run: |
+          echo "=== Final /docs summary ==="
+          ls -lh docs/
+          echo "=== Workflow complete ==="
