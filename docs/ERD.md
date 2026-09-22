@@ -83,18 +83,18 @@ erDiagram
 
 | Entity | Description |
 |--------|-------------|
-| **Users** | Single table for both Organisers and Participants, distinguished by the `Role` column. |
-| **Events** | Road running, walking, or cycling events created by Organisers. |
-| **Categories** | Race categories within an event (e.g. 5K Run, 10K Run, 21K Walk). |
-| **EventRoutes** | Optional route/map data attached to an event. One-to-one with Events. |
-| **Enrolments** | A Participant's entry into a specific Category. Enforces unique per participant per category. |
-| **Results** | Finish time and position recorded by an Organiser after the event. One-to-one with an Enrolment. |
+| **Users** | Both Organisers and Participants are stored in the same Users table. The role of each user is defined in the `Role` column. |
+| **Events** | These represent road running, walking, or cycling races organised by users with the Organiser role. |
+| **Categories** | These define race types within an event (for example, 5K Run, 10K Run, 21K Walk). |
+| **EventRoutes** | Optional map and route information that may be associated with an event. Each EventRoutes record maps to exactly one Event. |
+| **Enrolments** | Records a Participant's registration for a specific Category. A unique constraint ensures no participant can enrol in the same category more than once. |
+| **Results** | Records finish times and positions entered by an Organiser after the event. Each Results record is linked to exactly one Enrolment. |
 
 ## Cardinality Notes
 
-- A **User** (Organiser) can organise **many Events** (one-to-many).
-- An **Event** can have **many Categories** (one-to-many).
-- An **Event** has **at most one Route** (one-to-one).
-- A **User** (Participant) can have **many Enrolments** (one-to-many).
-- A **Category** can have **many Enrolments** (one-to-many).
-- An **Enrolment** produces **at most one Result** (one-to-one).
+- A User (Organiser) can create many Events (one-to-many).
+- An Event can have many Categories (one-to-many).
+- An Event will never have more than one Route (one-to-one).
+- A User (Participant) can make many Enrolments (one-to-many).
+- A Category can be associated with many Enrolments (one-to-many).
+- One Enrolment will produce no more than one Result (one-to-one).
