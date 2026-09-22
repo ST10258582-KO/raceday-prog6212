@@ -372,6 +372,49 @@ CREATE NONCLUSTERED INDEX IX_Events_StatusDate
 GO
 
 -- =============================================================
+-- VIEWS
+-- =============================================================
+
+-- View: Summary of all events with organiser name and category count
+CREATE OR ALTER VIEW dbo.vw_EventSummary AS
+SELECT
+    e.EventID,
+    e.Name          AS EventName,
+    e.EventDate,
+    e.City,
+    e.Province,
+    e.Status,
+    u.FullName       AS OrganiserName,
+    COUNT(c.CategoryID) AS CategoryCount
+FROM dbo.Events e
+JOIN  dbo.Users      u ON u.UserID    = e.OrganiserID
+LEFT JOIN dbo.Categories c ON c.EventID = e.EventID
+GROUP BY e.EventID, e.Name, e.EventDate, e.City, e.Province, e.Status, u.FullName;
+GO
+
+-- View: Participant enrolment and result history
+CREATE OR ALTER VIEW dbo.vw_ParticipantHistory AS
+SELECT
+    u.UserID         AS ParticipantID,
+    u.FullName       AS ParticipantName,
+    ev.Name          AS EventName,
+    ev.EventDate,
+    cat.Name         AS CategoryName,
+    cat.Distance,
+    cat.DistanceUnit,
+    en.PaymentStatus,
+    en.BibNumber,
+    r.FinishTime,
+    r.Position,
+    r.Status         AS ResultStatus
+FROM dbo.Enrolments en
+JOIN  dbo.Users      u   ON u.UserID      = en.ParticipantID
+JOIN  dbo.Categories cat ON cat.CategoryID = en.CategoryID
+JOIN  dbo.Events     ev  ON ev.EventID    = cat.EventID
+LEFT JOIN dbo.Results r  ON r.EnrolmentID = en.EnrolmentID;
+GO
+
+-- =============================================================
 -- VERIFICATION QUERIES
 -- =============================================================
 SELECT 'Users'       AS TableName, COUNT(*) AS RowCount FROM dbo.Users
