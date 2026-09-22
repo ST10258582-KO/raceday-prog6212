@@ -347,6 +347,31 @@ VALUES
 GO
 
 -- =============================================================
+-- RECOMMENDED INDEXES FOR COMMON QUERY PATTERNS
+-- =============================================================
+
+-- Fast lookup of events by organiser
+CREATE NONCLUSTERED INDEX IX_Events_OrganiserID
+    ON dbo.Events(OrganiserID);
+
+-- Fast lookup of categories by event
+CREATE NONCLUSTERED INDEX IX_Categories_EventID
+    ON dbo.Categories(EventID);
+
+-- Fast lookup of enrolments by participant
+CREATE NONCLUSTERED INDEX IX_Enrolments_ParticipantID
+    ON dbo.Enrolments(ParticipantID);
+
+-- Fast lookup of enrolments by category
+CREATE NONCLUSTERED INDEX IX_Enrolments_CategoryID
+    ON dbo.Enrolments(CategoryID);
+
+-- Fast lookup of upcoming events by date and status
+CREATE NONCLUSTERED INDEX IX_Events_StatusDate
+    ON dbo.Events(Status, EventDate);
+GO
+
+-- =============================================================
 -- VERIFICATION QUERIES
 -- =============================================================
 SELECT 'Users'       AS TableName, COUNT(*) AS RowCount FROM dbo.Users
