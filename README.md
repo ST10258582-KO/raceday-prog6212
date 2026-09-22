@@ -80,9 +80,9 @@ Checks performed:
 
 ## Video Presentation
 
-> **YouTube Link:** *(Add unlisted YouTube link here after recording)*
+> **YouTube Link:** *(To be added before submission)*
 
-The video covers:
-- Walkthrough of the ERD and the design decisions behind it
-- Explanation of the API endpoint plan
-- Live demonstration of the SQL script running in SSMS
+The video walkthrough covers:
+- ERD design decisions and entity relationships
+- API endpoint plan structure and role-based access choices
+- Live execution of the SQL script in SSMS
