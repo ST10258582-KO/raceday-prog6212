@@ -5,6 +5,33 @@ Roles: **None** = public, **Any** = any authenticated user, **Organiser** = Orga
 
 ---
 
+## Design Principles
+
+### Authentication Strategy
+All protected endpoints require a JWT (JSON Web Token) bearer token in the `Authorization` header (`Authorization: Bearer <token>`). Tokens are issued on successful login and registration. Tokens carry the user's ID and role as claims, allowing the API to make access-control decisions without a database round-trip on every request. Token expiry is set to 24 hours; clients must re-authenticate once the token expires. Refresh token support is planned for Part 2.
+
+### Role Enforcement
+Role-based access is enforced at two layers. At the database level, the `Role` column uses a CHECK constraint limiting values to `'Organiser'` or `'Participant'`. At the API level, every protected endpoint checks the role claim embedded in the JWT. Endpoints marked **Organiser** reject requests from Participants with `403 Forbidden`. Endpoints marked **Participant** reject requests from Organisers with `403 Forbidden`. Ownership checks (e.g. an Organiser may only modify their own events) are validated against the `OrganiserID` field on the event record.
+
+### Error Handling Conventions
+All error responses return a consistent JSON envelope:
+```json
+{
+  "status": 400,
+  "error": "Bad Request",
+  "message": "EventDate must be a future date."
+}
+```
+Validation errors include a `errors` array with field-level detail. The API never exposes internal stack traces or database error messages to clients.
+
+### RESTful Naming Conventions
+Resources are named using lowercase plural nouns (`/events`, `/categories`, `/enrolments`, `/results`). Sub-resources are expressed as nested paths (`/events/{id}/categories`). HTTP verbs carry the action meaning (GET = read, POST = create, PUT = full or partial update, DELETE = remove). Route parameters use camelCase (`{eventId}`, `{categoryId}`).
+
+### Request and Response Format
+All request bodies and response bodies use JSON (`Content-Type: application/json`). Dates are formatted as ISO 8601 strings (`YYYY-MM-DD` for dates, `HH:MM:SS` for times). Monetary values are represented as decimal numbers. Arrays are returned directly as the response body (not wrapped in an object) except where pagination metadata is included.
+
+---
+
 ## Authentication
 
 | HTTP Method | Route | Description | Role Required | Request Body | Expected Response |
