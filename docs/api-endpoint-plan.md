@@ -104,3 +104,19 @@ All request bodies and response bodies use JSON (`Content-Type: application/json
 | GET | /api/events/{id}/route | Returns route and map information for an event. Publicly accessible. | None | None | 200 OK – route object. 404 Not Found – event or route does not exist. |
 | POST | /api/events/{id}/route | Adds route information to an event. Only the event's Organiser may add a route. | Organiser | `{ routeDescription?, mapURL?, gpxData?, elevationGain? }` | 201 Created – route object. 400 Bad Request – route already exists (use PUT). 403 Forbidden. 404 Not Found. |
 | PUT | /api/events/{id}/route | Updates route information for an event. Only the event's Organiser may update. | Organiser | `{ routeDescription?, mapURL?, gpxData?, elevationGain? }` | 200 OK – updated route object. 403 Forbidden. 404 Not Found. |
+
+---
+
+## HTTP Status Code Reference
+
+| Code | Meaning       | When Used                                                                                         |
+|------|---------------|---------------------------------------------------------------------------------------------------|
+| 200  | OK            | The request succeeded and the response body contains the requested data (GET, PUT).               |
+| 201  | Created       | A new resource was successfully created (POST). The response body contains the new resource.      |
+| 204  | No Content    | The request succeeded but there is no response body to return (DELETE).                           |
+| 400  | Bad Request   | The request body failed validation (missing required fields, invalid values, business rule breach).|
+| 401  | Unauthorized  | No valid JWT token was provided, or the token has expired. The client must log in again.          |
+| 403  | Forbidden     | A valid token was provided but the user does not have the required role or does not own the resource. |
+| 404  | Not Found     | The requested resource does not exist (invalid ID, deleted record).                               |
+| 409  | Conflict      | The request would create a duplicate that violates a unique constraint (e.g. email already registered, participant already enrolled in category). |
+| 500  | Internal Server Error | An unexpected server-side error occurred. The client should retry or contact support.     |
