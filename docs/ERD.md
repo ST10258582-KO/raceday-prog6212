@@ -118,3 +118,25 @@ Route information is stored in a dedicated EventRoutes table rather than as extr
 
 **Status fields use CHECK constraints, not lookup tables**
 The Status columns on Events, Enrolments, and Results use `CHECK` constraints (for example `CK_Events_Status`) instead of foreign keys to separate lookup tables. For a small, stable set of values that will rarely change this avoids the overhead of additional tables and joins on every query. The allowed values are clearly visible in the schema definition itself, making it easy to understand the lifecycle of each entity without cross-referencing another table.
+
+## Naming Conventions
+
+The following conventions are applied consistently throughout the RaceDay database schema.
+
+**Table and column names — PascalCase**
+All table names and column names use PascalCase (e.g. `EventRoutes`, `FullName`, `PaymentStatus`). This is consistent with SQL Server conventions and matches the C# property names used in the ASP.NET Core API layer, reducing the need for mapping configuration.
+
+**ID suffix for primary and foreign keys**
+Every primary key column ends with the suffix `ID` (e.g. `UserID`, `EventID`, `CategoryID`). Foreign key columns use the same name as the primary key they reference (e.g. `OrganiserID` references `Users.UserID`; `ParticipantID` also references `Users.UserID`). This makes join conditions self-documenting.
+
+**Plural table names**
+Tables are named in the plural form to represent a collection of entities (e.g. `Users`, `Events`, `Categories`, `EventRoutes`, `Enrolments`, `Results`).
+
+**CHECK constraint naming — CK_TableName_ColumnName**
+CHECK constraints follow the pattern `CK_<TableName>_<ColumnName>` (e.g. `CK_Users_Role`, `CK_Events_Status`, `CK_Categories_Distance`). This makes it immediately clear which table and column the constraint applies to when reading error messages or system catalogue queries.
+
+**Foreign key naming — FK_ChildTable_ParentTable**
+Foreign key constraints follow the pattern `FK_<ChildTable>_<ParentTable>` (e.g. `FK_Events_Organiser`, `FK_Categories_Event`, `FK_Results_Enrolment`). Where multiple FKs reference the same parent table, a descriptive qualifier replaces the parent name (e.g. `FK_Enrolments_Participant`, `FK_Enrolments_Category`).
+
+**Unique constraint naming — UQ_TableName_ColumnName**
+Unique constraints follow the pattern `UQ_<TableName>_<ColumnName>` (e.g. `UQ_Users_Email`, `UQ_Routes_EventID`). For composite unique constraints, the column names are concatenated (e.g. `UQ_Enrolment_ParticipantCategory`).
