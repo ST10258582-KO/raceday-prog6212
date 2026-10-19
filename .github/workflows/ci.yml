@@ -1,0 +1,38 @@
+name: RaceDay API CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run unit tests
+        run: dotnet test --no-build --configuration Release --verbosity normal --logger "console;verbosity=normal"
+
+      - name: Verify docs folder structure (Part 1 check)
+        run: |
+          echo "Verifying required planning documents..."
+          test -f docs/ERD.png || test -f docs/ERD.md && echo "ERD: OK" || (echo "ERD missing" && exit 1)
+          test -f docs/api-endpoint-plan.md && echo "Endpoint plan: OK" || (echo "Endpoint plan missing" && exit 1)
+          test -f docs/raceday_schema.sql && echo "SQL script: OK" || (echo "SQL script missing" && exit 1)
+          echo "All required documents found."
