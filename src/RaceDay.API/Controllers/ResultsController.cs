@@ -55,6 +55,9 @@ public class ResultsController(RaceDayContext db) : ControllerBase
         if (!validStatuses.Contains(req.Status))
             return BadRequest(new { status = 400, error = "Bad Request", message = "Status must be 'Finished', 'DNF', 'DNS', or 'DQ'." });
 
+        if (req.Position.HasValue && req.Position.Value <= 0)
+            return BadRequest(new { status = 400, error = "Bad Request", message = "Position must be a positive integer." });
+
         var result = new Result
         {
             EnrolmentID = req.EnrolmentID,
@@ -67,7 +70,7 @@ public class ResultsController(RaceDayContext db) : ControllerBase
         db.Results.Add(result);
         await db.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetMyResults), new { id = result.ResultID }, ToResponse(result));
+        return StatusCode(StatusCodes.Status201Created, ToResponse(result));
     }
 
     /// <summary>Updates an existing result record. Organiser must own the event.</summary>
@@ -90,6 +93,13 @@ public class ResultsController(RaceDayContext db) : ControllerBase
 
         if (result.Enrolment.Category.Event.OrganiserID != CurrentUserId)
             return Forbid();
+
+        var validStatuses = new[] { "Finished", "DNF", "DNS", "DQ" };
+        if (req.Status != null && !validStatuses.Contains(req.Status))
+            return BadRequest(new { status = 400, error = "Bad Request", message = "Status must be 'Finished', 'DNF', 'DNS', or 'DQ'." });
+
+        if (req.Position.HasValue && req.Position.Value <= 0)
+            return BadRequest(new { status = 400, error = "Bad Request", message = "Position must be a positive integer." });
 
         if (req.FinishTime.HasValue) result.FinishTime = req.FinishTime;
         if (req.Position.HasValue) result.Position = req.Position;

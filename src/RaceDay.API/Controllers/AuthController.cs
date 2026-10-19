@@ -66,7 +66,8 @@ public class AuthController(RaceDayContext db, IConfiguration config) : Controll
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
         var user = await db.Users.SingleOrDefaultAsync(u => u.Email == req.Email && u.IsActive);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
+        var passwordValid = user != null && BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash);
+        if (!passwordValid)
             return Unauthorized(new { status = 401, error = "Unauthorized", message = "Invalid email or password." });
 
         var token = GenerateToken(user);

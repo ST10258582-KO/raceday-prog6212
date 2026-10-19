@@ -114,6 +114,10 @@ public class EventsController(RaceDayContext db) : ControllerBase
         if (ev.OrganiserID != CurrentUserId)
             return Forbid();
 
+        var validStatuses = new[] { "Upcoming", "Open", "Closed", "Completed", "Cancelled" };
+        if (req.Status != null && !validStatuses.Contains(req.Status))
+            return BadRequest(new { status = 400, error = "Bad Request", message = "Status must be one of: Upcoming, Open, Closed, Completed, Cancelled." });
+
         if (req.Name != null) ev.Name = req.Name;
         if (req.Description != null) ev.Description = req.Description;
         if (req.EventDate.HasValue) ev.EventDate = req.EventDate.Value;

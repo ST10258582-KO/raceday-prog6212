@@ -36,6 +36,10 @@ public class EnrolmentTests(TestWebApplicationFactory factory) : IClassFixture<T
             new CreateCategoryRequest("5K Test", 5m, "km", 100m, 100, "Running")))
             .Content.ReadFromJsonAsync<CategoryResponse>();
 
+        // Open the event so participants can enrol
+        await _client.PutAsJsonAsync($"/api/events/{ev.EventID}",
+            new UpdateEventRequest(null, null, null, null, null, null, "Open", null));
+
         _client.DefaultRequestHeaders.Authorization = null;
         return (ev.EventID, cat!.CategoryID);
     }

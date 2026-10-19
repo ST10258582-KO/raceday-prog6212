@@ -118,6 +118,10 @@ public class CategoriesController(RaceDayContext db) : ControllerBase
         if (category == null)
             return NotFound(new { status = 404, error = "Not Found", message = "Category not found." });
 
+        var validTypes = new[] { "Running", "Walking", "Cycling" };
+        if (req.EventType != null && !validTypes.Contains(req.EventType))
+            return BadRequest(new { status = 400, error = "Bad Request", message = "EventType must be 'Running', 'Walking', or 'Cycling'." });
+
         if (req.Name != null) category.Name = req.Name;
         if (req.Distance.HasValue) category.Distance = req.Distance.Value;
         if (req.DistanceUnit != null) category.DistanceUnit = req.DistanceUnit;
