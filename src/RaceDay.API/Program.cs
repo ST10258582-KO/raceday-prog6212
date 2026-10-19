@@ -81,6 +81,14 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Seed database in development/testing environments
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<RaceDayContext>();
+    await RaceDay.API.Data.DbSeeder.SeedAsync(db);
+}
+
 app.UseMiddleware<GlobalExceptionHandler>();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
