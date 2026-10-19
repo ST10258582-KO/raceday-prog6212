@@ -77,10 +77,13 @@ public class AuthController(RaceDayContext db, IConfiguration config) : Controll
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        // Include UserID as both Sub and NameIdentifier so controllers can resolve it via ClaimTypes.NameIdentifier
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.UserID.ToString()),
             new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+            new Claim(ClaimTypes.Name, user.FullName),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Role, user.Role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
