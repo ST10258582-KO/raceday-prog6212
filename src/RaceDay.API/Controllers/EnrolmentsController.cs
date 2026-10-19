@@ -44,6 +44,11 @@ public class EnrolmentsController(RaceDayContext db) : ControllerBase
         if (category == null)
             return NotFound(new { status = 404, error = "Not Found", message = "Category not found." });
 
+        // Participants may only enrol in events that are currently accepting entries
+        var allowedStatuses = new[] { "Open", "Upcoming" };
+        if (!allowedStatuses.Contains(category.Event.Status))
+            return BadRequest(new { status = 400, error = "Bad Request", message = "This event is not currently accepting enrolments." });
+
         var alreadyEnrolled = await db.Enrolments
             .AnyAsync(en => en.ParticipantID == CurrentUserId && en.CategoryID == req.CategoryID);
         if (alreadyEnrolled)
