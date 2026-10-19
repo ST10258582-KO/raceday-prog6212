@@ -38,6 +38,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
+// CORS — allow the MVC frontend (Part 3) and local development tools
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5001",
+                "http://localhost:5173",
+                "https://localhost:7001")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -97,6 +112,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty; // Serve Swagger at root
 });
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
