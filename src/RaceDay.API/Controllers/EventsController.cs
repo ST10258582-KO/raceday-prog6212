@@ -69,6 +69,9 @@ public class EventsController(RaceDayContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest req)
     {
+        if (req.EventDate < DateOnly.FromDateTime(DateTime.UtcNow))
+            return BadRequest(new { status = 400, error = "Bad Request", message = "EventDate must be a future date." });
+
         var ev = new Event
         {
             OrganiserID = CurrentUserId,
