@@ -233,5 +233,29 @@
             <response code="400">Validation error.</response>
             <response code="401">Not authenticated.</response>
         </member>
+        <member name="T:RaceDay.API.Data.Migrations.InitialCreate">
+            <inheritdoc />
+        </member>
+        <member name="M:RaceDay.API.Data.Migrations.InitialCreate.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:RaceDay.API.Data.Migrations.InitialCreate.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:RaceDay.API.Data.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:RaceDay.API.Middleware.GlobalExceptionHandler">
+            <summary>
+            Catches unhandled exceptions and returns a consistent JSON error envelope.
+            Prevents internal stack traces from leaking to clients.
+            </summary>
+        </member>
+        <member name="M:RaceDay.API.Middleware.GlobalExceptionHandler.#ctor(Microsoft.AspNetCore.Http.RequestDelegate,Microsoft.Extensions.Logging.ILogger{RaceDay.API.Middleware.GlobalExceptionHandler})">
+            <summary>
+            Catches unhandled exceptions and returns a consistent JSON error envelope.
+            Prevents internal stack traces from leaking to clients.
+            </summary>
+        </member>
     </members>
 </doc>

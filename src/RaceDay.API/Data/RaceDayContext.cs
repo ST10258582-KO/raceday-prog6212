@@ -34,6 +34,8 @@ public class RaceDayContext(DbContextOptions<RaceDayContext> options) : DbContex
 
         modelBuilder.Entity<Category>(e =>
         {
+            e.Property(c => c.Distance).HasPrecision(6, 2);
+            e.Property(c => c.EntryFee).HasPrecision(10, 2);
             e.HasCheckConstraint("CK_Categories_Unit", "DistanceUnit IN ('km', 'm')");
             e.HasCheckConstraint("CK_Categories_Type", "EventType IN ('Running', 'Walking', 'Cycling')");
             e.HasCheckConstraint("CK_Categories_Distance", "Distance > 0");
@@ -46,6 +48,7 @@ public class RaceDayContext(DbContextOptions<RaceDayContext> options) : DbContex
 
         modelBuilder.Entity<EventRoute>(e =>
         {
+            e.Property(r => r.ElevationGain).HasPrecision(8, 2);
             e.HasIndex(r => r.EventID).IsUnique();
             e.HasOne(r => r.Event)
                 .WithOne(ev => ev.Route)
