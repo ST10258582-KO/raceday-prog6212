@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RaceDay.API.Data;
+using RaceDay.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,6 +81,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionHandler>();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
