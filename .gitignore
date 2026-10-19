@@ -1,3 +1,16 @@
+# .NET build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.nupkg
+*.snupkg
+
+# Test results
+TestResults/
+coverage/
+
 # Python cache files
 __pycache__/
 *.pyc
