@@ -27,16 +27,23 @@ public class EventsController(RaceDayContext db) : ControllerBase
                 c.CategoryID, c.EventID, c.Name, c.Distance, c.DistanceUnit,
                 c.EntryFee, c.MaxParticipants, c.EventType, c.CreatedAt)) : null);
 
-    /// <summary>Returns all upcoming and open events. Public access.</summary>
+    /// <summary>Returns all events, optionally filtered by status or city. Public access.</summary>
+    /// <param name="status">Optional filter: Upcoming, Open, Closed, Completed, Cancelled</param>
+    /// <param name="city">Optional filter: partial match on City field</param>
     /// <response code="200">Array of event objects.</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<EventResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetEvents()
+    public async Task<IActionResult> GetEvents([FromQuery] string? status, [FromQuery] string? city)
     {
-        var events = await db.Events
-            .Include(e => e.Organiser)
-            .OrderBy(e => e.EventDate)
-            .ToListAsync();
+        var query = db.Events.Include(e => e.Organiser).AsQueryable();
+
+        if (!string.IsNullOrEmpty(status))
+            query = query.Where(e => e.Status == status);
+
+        if (!string.IsNullOrEmpty(city))
+            query = query.Where(e => e.City.Contains(city));
+
+        var events = await query.OrderBy(e => e.EventDate).ToListAsync();
         return Ok(events.Select(e => ToResponse(e)));
     }
 
